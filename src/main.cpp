@@ -30,12 +30,13 @@ int main(int argc, char ** argv)
       return 0;
     }
   string instruction = argv[1];
+  std::cout<< "INSTRUCTION: " << instruction << std::endl;
   if( instruction == "TV" )
     {
       Mat img = imread(argv[2], IMREAD_GRAYSCALE);
       cout << NORM_TV(img) << endl;
     }
-  if( instruction == "TVPHI")
+  else if( instruction == "TVPHI")
     {
       Mat img = imread(argv[2], IMREAD_GRAYSCALE);
       LRTVPHI lrttv;
