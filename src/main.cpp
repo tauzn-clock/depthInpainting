@@ -32,21 +32,21 @@ int main(int argc, char ** argv)
   string instruction = argv[1];
   if( instruction == "TV" )
     {
-      Mat img = imread(argv[2], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat img = imread(argv[2], IMREAD_GRAYSCALE);
       cout << NORM_TV(img) << endl;
     }
   if( instruction == "TVPHI")
     {
-      Mat img = imread(argv[2], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat img = imread(argv[2], IMREAD_GRAYSCALE);
       LRTVPHI lrttv;
       lrttv.setShrinkageParam(1.0, 1.0);
       cout << lrttv.NORM_TVPHI(img) << endl;
     }
   else if( instruction == "P" )
     {
-      Mat original = imread(argv[2], CV_LOAD_IMAGE_GRAYSCALE);
-      Mat inpainted = imread(argv[4], CV_LOAD_IMAGE_GRAYSCALE);
-      Mat mask = imread(argv[3], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat original = imread(argv[2], IMREAD_GRAYSCALE);
+      Mat inpainted = imread(argv[4], IMREAD_GRAYSCALE);
+      Mat mask = imread(argv[3], IMREAD_GRAYSCALE);
       cout << PSNR(original, inpainted, mask) << endl;
     }
   else if( instruction == "G" )
@@ -55,7 +55,7 @@ int main(int argc, char ** argv)
       int missingRate = atof(argv[3]);
       string outputMask = argv[4];
       string outputMissing = argv[5];
-      Mat disparityOriginal = imread(disparityPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat disparityOriginal = imread(disparityPath, IMREAD_GRAYSCALE);
  
       int W = disparityOriginal.cols;
       int H = disparityOriginal.rows;
@@ -76,9 +76,9 @@ int main(int argc, char ** argv)
     {
       string disparityPath = argv[2];
       string maskPath = argv[3];
-      Mat disparityMissing = imread(disparityPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat disparityMissing = imread(disparityPath, IMREAD_GRAYSCALE);
       string inpaintedPath = argv[4];
-      Mat mask = imread(maskPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
 
       multiply(disparityMissing, mask / 255, disparityMissing);
       Mat inpainted = TNNR(disparityMissing, mask, 9, 9, 0.06);
@@ -90,9 +90,9 @@ int main(int argc, char ** argv)
     {
       string disparityPath = argv[2];
       string maskPath = argv[3];
-      Mat disparityMissing = imread(disparityPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat disparityMissing = imread(disparityPath, IMREAD_GRAYSCALE);
       string inpaintedPath = argv[4];
-      Mat mask = imread(maskPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
 
       multiply(disparityMissing, mask / 255, disparityMissing);
       // Mat denoised;
@@ -102,7 +102,7 @@ int main(int argc, char ** argv)
 
       // try our TV
       // we can use low rank to initialize U_
-      Mat denoised = imread(argv[5], CV_LOAD_IMAGE_ANYCOLOR); //TNNR(disparityMissing, mask, 9, 9, 0.06);
+      Mat denoised = imread(argv[5], IMREAD_ANYCOLOR); //TNNR(disparityMissing, mask, 9, 9, 0.06);
 
       LRTV lrtv(disparityMissing, mask);
       // rho dt lambda_tv lambda_rank 100 10
@@ -123,9 +123,9 @@ int main(int argc, char ** argv)
     {
       string disparityPath = argv[2];
       string maskPath = argv[3];
-      Mat disparityMissing = imread(disparityPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat disparityMissing = imread(disparityPath, IMREAD_GRAYSCALE);
       string inpaintedPath = argv[4];
-      Mat mask = imread(maskPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
 
       multiply(disparityMissing, mask / 255, disparityMissing);
 
@@ -137,7 +137,7 @@ int main(int argc, char ** argv)
       // try our TV
       // we can use low rank to initialize U_
       //Mat denoised = TNNR(disparityMissing, mask, 9, 9, 0.06);
-      Mat denoised = imread(argv[5], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat denoised = imread(argv[5], IMREAD_GRAYSCALE);
 
       LRTV lrtv(disparityMissing, mask);
       // rho dt lambda_tv lambda_rank 100 10
@@ -158,7 +158,7 @@ int main(int argc, char ** argv)
   // for stat
   else if( instruction == "S" )
     {
-      Mat dispU = imread(argv[2], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat dispU = imread(argv[2], IMREAD_GRAYSCALE);
       int H = dispU.rows;
       int W = dispU.cols;
       Mat disp = Mat::zeros(H, W, CV_32FC1);
@@ -206,7 +206,7 @@ int main(int argc, char ** argv)
     }
     else if( instruction == "L0" )
     {
-      Mat dispU = imread(argv[2], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat dispU = imread(argv[2], IMREAD_GRAYSCALE);
       int H = dispU.rows;
       int W = dispU.cols;
       Mat disp = Mat::zeros(H, W, CV_32FC1);
@@ -243,9 +243,9 @@ int main(int argc, char ** argv)
     {
       string disparityPath = argv[2]; //"../../MiddInpaint/ArtL/disp.png";
       string maskPath = argv[3]; //"../../MiddInpaint/ArtL/mask_50.png";
-      Mat disparityMissing = imread(disparityPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat disparityMissing = imread(disparityPath, IMREAD_GRAYSCALE);
       string inpaintedPath = argv[4]; //"just_a_test.png";
-      Mat mask = imread(maskPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
 
       // int H_ = mask.rows;
       // int W_ = mask.cols;
@@ -258,7 +258,7 @@ int main(int argc, char ** argv)
       LRTVPHI lrttv(disparityMissing, mask);
       lrttv.setShrinkageParam(1.0,1.0);
 
-      Mat denoised = imread(argv[5], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat denoised = imread(argv[5], IMREAD_GRAYSCALE);
      
       // rho dt lambda_tv lambda_rank
       // rho = 1.2
@@ -304,11 +304,11 @@ int main(int argc, char ** argv)
     {
       string disparityPath = argv[2]; //"../../MiddInpaint/ArtL/disp.png";
       string maskPath = argv[3]; //"../../MiddInpaint/ArtL/mask_50.png";
-      Mat disparityMissing = imread(disparityPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat disparityMissing = imread(disparityPath, IMREAD_GRAYSCALE);
       Mat orig;
       disparityMissing.copyTo(orig);
       string inpaintedPath = argv[4]; //"just_a_test.png";
-      Mat mask = imread(maskPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
 
       int K = atoi(argv[6]);
       float lambda_l0 = atof(argv[7]);
@@ -316,7 +316,7 @@ int main(int argc, char ** argv)
 
       string path1 = argv[9];
       multiply(disparityMissing, mask / 255, disparityMissing);
-      Mat denoised = imread(argv[5], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat denoised = imread(argv[5], IMREAD_GRAYSCALE);
       LRL0 lrl0(disparityMissing, mask);
       lrl0.setParameters(1.2,0.1,lambda_l0,10);
       lrl0.init_U(denoised);
@@ -331,11 +331,11 @@ int main(int argc, char ** argv)
     {
       string disparityPath = argv[2]; //"../../MiddInpaint/ArtL/disp.png";
       string maskPath = argv[3]; //"../../MiddInpaint/ArtL/mask_50.png";
-      Mat disparityMissing = imread(disparityPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat disparityMissing = imread(disparityPath, IMREAD_GRAYSCALE);
       Mat orig;
       disparityMissing.copyTo(orig);
       string inpaintedPath = argv[4]; //"just_a_test.png";
-      Mat mask = imread(maskPath, CV_LOAD_IMAGE_GRAYSCALE);
+      Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
 
       int K = atoi(argv[6]);
       float lambda_l0 = atof(argv[7]);
@@ -343,7 +343,7 @@ int main(int argc, char ** argv)
 
       string path1 = argv[9];
       multiply(disparityMissing, mask / 255, disparityMissing);
-      Mat denoised = imread(argv[5], CV_LOAD_IMAGE_GRAYSCALE);
+      Mat denoised = imread(argv[5], IMREAD_GRAYSCALE);
       LRL0PHI lrl0phi(disparityMissing, mask);
       lrl0phi.setParameters(1.2,0.1,lambda_l0,10,0.75);
       lrl0phi.init_U(denoised);
