@@ -1,28 +1,30 @@
-#Project
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 3.10)
+project(depthInpainting)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(COMMAND cmake_policy)
-      cmake_policy(SET CMP0003 NEW)
-endif(COMMAND cmake_policy)
-	  
-project(LRTV)
+# Dependencies
+find_package(OpenCV REQUIRED)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# Flags
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse4.2 -std=c++11")
-#if (APPLE)
-#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse4.2 -stdlib=libstdc++")
-#endif (APPLE)
+# Source files
+file(GLOB_RECURSE SRC 
+     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
 
-set(CMAKE_BUILD_TYPE Release)
+add_executable(depthInpainting ${SRC})
 
-find_package( OpenCV REQUIRED )
-# add_library(mgl SHARED IMPORTED)
-# set_property(TARGET mgl PROPERTY IMPORTED_LOCATION /usr/local/Cellar/mathgl/2.3.3_1/lib/libmgl.7.4.0.dylib)
-# add_library(mgl1 SHARED IMPORTED)
-# set_property(TARGET mgl1 PROPERTY IMPORTED_LOCATION /usr/local/Cellar/mathgl/2.3.3_1/lib/libmgl.7.4.0.dylib)
-# depthInpaint
-file(GLOB LRTV_SRC_FILES "*.cpp")
-add_executable(depthInpainting ${LRTV_SRC_FILES})
-target_link_libraries(depthInpainting ${OpenCV_LIBS})
+# Include and link
+target_include_directories(depthInpainting PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+target_link_libraries(depthInpainting PRIVATE
+    ${OpenCV_LIBS})
 
+# Build settings
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+endif()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
