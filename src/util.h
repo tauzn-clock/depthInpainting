@@ -6,4 +6,6 @@ using namespace cv;
 float PSNR(Mat &original, Mat &inpainted, Mat &mask);
 
 float NORM_TV(Mat &img);
+
+void seeMaxMin(Mat &img);
 #endif

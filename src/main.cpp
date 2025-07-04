@@ -75,14 +75,17 @@ int main(int argc, char ** argv)
   // Low rank
   else if(instruction == "L" )
     {
-      string disparityPath = argv[2];
+      string depthPath = argv[2];
       string maskPath = argv[3];
-      Mat disparityMissing = imread(disparityPath, IMREAD_GRAYSCALE);
       string inpaintedPath = argv[4];
-      Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
 
-      multiply(disparityMissing, mask / 255, disparityMissing);
-      Mat inpainted = TNNR(disparityMissing, mask, 9, 9, 0.06);
+      Mat depth = imread(depthPath, IMREAD_UNCHANGED);
+      seeMaxMin(depth);
+      Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
+      mask.convertTo(mask, depth.type());
+
+      multiply(depth, mask / 255, depth);
+      Mat inpainted = TNNR(depth, mask, 9, 9, 0.06);
       imwrite(argv[4], inpainted);
       
     }

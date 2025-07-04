@@ -55,3 +55,10 @@ float NORM_TV(Mat &img)
   sqrt(U_x + U_y, grad);
   return sum(grad)[0];
 }
+
+void seeMaxMin(Mat &img)
+{
+  double maxVal, minVal;
+  cv::minMaxLoc(img, &minVal, &maxVal);
+  std::cout << "minVal = " << minVal << ", maxVal = " << maxVal << std::endl;
+}
