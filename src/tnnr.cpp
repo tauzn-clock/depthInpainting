@@ -58,10 +58,7 @@ Mat APGL(Mat &A, Mat &B, Mat &X, Mat &M, Mat &mask, float eps, float lambda)
       multiply(X-M, known, tmp);
       float tr = trace(X*BA)[0];
       objval = traceNorm(X)  - tr + lambda / 2.0 * pow(norm(tmp,NORM_L2),2); 
-      if(k >= 2 && -(objval - objval_last) < eps)
-	{
-	  break;
-	}
+      if(k >= 2 && -(objval - objval_last) < eps) break;
 
       objval_last = objval;
     }
@@ -71,8 +68,7 @@ Mat APGL(Mat &A, Mat &B, Mat &X, Mat &M, Mat &mask, float eps, float lambda)
 }
 
 
-Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda)
-{
+Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda){
   Mat X, M, A, B;
 
   im0.convertTo(X, CV_32FC1);
@@ -86,32 +82,27 @@ Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda)
   int number_out_of_iter = 10;
 
   
-  for(int R = lower_R; R <= upper_R; R++)
-    {
+  for(int R = lower_R; R <= upper_R; R++){
+    for(int out_iter = 1; out_iter < 11; ++out_iter){
+      //	  cout << "  TNNR  iter = " << out_iter << endl;
+      Mat u,sigma,v;
+      SVD::compute(X, sigma, u, v);
+      A = u(Range::all(), Range(0, R - 1));
+      A = A.t();
+      B = v(Range(0, R - 1), Range::all());
 
-      for(int out_iter = 1; out_iter < 11; ++out_iter)
-	{
-	  //	  cout << "  TNNR  iter = " << out_iter << endl;
-	  Mat u,sigma,v;
-	  SVD::compute(X, sigma, u, v);
-	  A = u(Range::all(), Range(0, R - 1));
-	  A = A.t();
-	  B = v(Range(0, R - 1), Range::all());
+      X_rec = APGL(A, B, X, M, mask, eps, lambda);
 
-	  X_rec = APGL(A, B, X, M, mask, eps, lambda);
+      if(out_iter >= 2 && norm(X_rec - X_rec_last) / norm(M,NORM_L2) < .01)
+        {
+          X_rec.copyTo(X);
+          break;
+        }
 
-	  if(out_iter >= 2 && norm(X_rec - X_rec_last) / norm(M,NORM_L2) < .01)
-	    {
-	      X_rec.copyTo(X);
-	      break;
-	    }
-
-	  X_rec.copyTo(X);
-	  X_rec.copyTo(X_rec_last);
-
-	     
-	}
-    } 
+      X_rec.copyTo(X);
+      X_rec.copyTo(X_rec_last);	     
+	  }
+  } 
 
   return X;
 }
