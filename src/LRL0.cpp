@@ -251,8 +251,8 @@ void LRL0::sub_1(int K)
         for(list<int>::iterator j = i->second.G.begin(); j != i->second.G.end(); ++j)
             U_.at<float>(*j/U_.cols, *j % U_.cols) = i->second.Y;
 
-    Mat temp = Mat::zeros(H_, W_, CV_8UC1);
-    U_.convertTo(temp, CV_8UC1);
+    Mat temp = Mat::zeros(H_, W_, CV_32FC1);
+    U_.convertTo(temp, CV_32FC1);
     string name;
     name = "ans_"+to_string(iters)+".png";
     imwrite("./result/"+name, temp);
@@ -262,13 +262,13 @@ void LRL0::sub_1(int K)
 void LRL0::sub_2()
 {
     Mat A = U_ + Y_;
-    Mat mask = 255*Mat::ones(H_, W_, CV_8UC1);
+    Mat mask = 255*Mat::ones(H_, W_, CV_32FC1);
     float lambda = rho_ / 2.0 / lambda_rank_ / alpha_;
     
     // TNNR
     Mat At;
-    A.convertTo(At, CV_8UC1);
-    M_ = TNNR(At, mask, 9, 9, lambda);
+    A.convertTo(At, CV_32FC1);
+    M_ = TNNR(At, mask, 90, 90, lambda);
     
     
 }
@@ -299,7 +299,7 @@ Mat LRL0::compute(int K, int max_iter, string path, Mat &original, string path1)
         
         
 
-      U_.convertTo(output, CV_8UC1);
+      U_.convertTo(output, CV_32FC1);
       string newpath = path + to_string(iter+1);
       
       imwrite(newpath + ".png", output);

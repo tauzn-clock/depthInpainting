@@ -309,22 +309,28 @@ int main(int argc, char ** argv)
     }
   else if( instruction == "LRL0" )
     {
-      string disparityPath = argv[2]; //"../../MiddInpaint/ArtL/disp.png";
+      string depthPath = argv[2]; //"../../MiddInpaint/ArtL/disp.png";
       string maskPath = argv[3]; //"../../MiddInpaint/ArtL/mask_50.png";
-      Mat disparityMissing = imread(disparityPath, IMREAD_GRAYSCALE);
-      Mat orig;
-      disparityMissing.copyTo(orig);
       string inpaintedPath = argv[4]; //"just_a_test.png";
+      
+      Mat depthMissing = imread(depthPath, IMREAD_UNCHANGED);
+      depthMissing.convertTo(depthMissing, CV_32FC1);
+      Mat orig;
+      depthMissing.copyTo(orig);
+     
       Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
+      mask.convertTo(mask, depthMissing.type());
+      multiply(depthMissing, mask / 255, depthMissing);
 
-      int K = atoi(argv[6]);
-      float lambda_l0 = atof(argv[7]);
-      int max_iter = atoi(argv[8]);
+      int K = 30;
+      float lambda_l0 = 30;
+      int max_iter = 3000;
 
-      string path1 = argv[9];
-      multiply(disparityMissing, mask / 255, disparityMissing);
-      Mat denoised = imread(argv[5], IMREAD_GRAYSCALE);
-      LRL0 lrl0(disparityMissing, mask);
+      string path1 = ".";
+      
+      Mat denoised = TNNR(depthMissing, mask, 90, 90, 0.06);
+
+      LRL0 lrl0(depthMissing, mask);
       lrl0.setParameters(1.2,0.1,lambda_l0,10);
       lrl0.init_U(denoised);
       Mat result = lrl0.compute(K, max_iter, inpaintedPath, orig, path1);
