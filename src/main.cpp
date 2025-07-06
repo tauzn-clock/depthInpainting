@@ -80,12 +80,15 @@ int main(int argc, char ** argv)
       string inpaintedPath = argv[4];
 
       Mat depth = imread(depthPath, IMREAD_UNCHANGED);
-      seeMaxMin(depth);
+      depth.convertTo(depth, CV_32FC1);
+
       Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
       mask.convertTo(mask, depth.type());
 
       multiply(depth, mask / 255, depth);
-      Mat inpainted = TNNR(depth, mask, 9, 9, 0.06);
+      Mat inpainted = TNNR(depth, mask, 90, 90, 0.06);
+      seeMaxMin(inpainted);
+      inpainted.convertTo(inpainted, CV_16UC1);
       imwrite(argv[4], inpainted);
       
     }
