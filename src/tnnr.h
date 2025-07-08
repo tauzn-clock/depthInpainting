@@ -9,4 +9,6 @@ using namespace std;
 using namespace cv;
 Mat APGL(Mat &A, Mat &B, Mat &X, Mat &M, Mat &mask, float eps, float lambda);
 Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda = 0.06);
+Mat TNRR_APGL(Mat &im0, Mat &mask, float lambda = 0.06, float eps = 0.1);
+Mat TNNR_ADMM(Mat &im0, Mat &mask, float beta = 1.0, float eps = 0.1);
 #endif

@@ -101,3 +101,111 @@ Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda){
 
   return X;
 }
+
+Mat TNRR_APGL(Mat& im0, Mat& mask, float lambda, float eps){
+  float t = 1.0;
+
+  int H = im0.rows;
+  int W = im0.cols;
+  int R = (int)(min(H, W) / 2.0);
+  cout<< "R = " << R << endl;
+
+  Mat A, Sigma, B;
+  SVD::compute(im0, Sigma, A, B);
+  cout<< "A:" << A.rows << " " << A.cols << endl;
+  cout<< "B:" << B.rows << " " << B.cols << endl;
+  cout<< "Sigma:" << Sigma.rows << " " << Sigma.cols << endl;
+  cout<< Sigma << endl;
+  A = A(Range::all(), Range(0, R));
+  cout << "A after:" << A.rows << " " << A.cols << endl;
+  B = B(Range(0, R), Range::all());
+  cout << "B after:" << B.rows << " " << B.cols << endl;
+  Mat AB;
+  gemm(A, B, 1.0, Mat(), 0.0, AB);
+  cout << "AB:" << AB.rows << " " << AB.cols << endl;
+  cout << "AB" << endl << AB << endl;
+
+  Mat X, Xlast, Y;
+  im0.copyTo(X);
+  X.copyTo(Y);
+  X.copyTo(Xlast);
+
+  for(int i=0; i<200; i++){
+    Mat Ymasked = (Y-im0).mul(mask);
+    Mat tmp = Y + t * (AB - lambda * (Ymasked));
+    Mat u, s, v;
+    SVD::compute(tmp, s, u, v);
+    s = max(s - t, 0.0);
+    s = Mat::diag(s);
+    Mat Xnew = u * s * v;
+    float tnew = (1 + sqrt(1 + 4 * t * t)) / 2.0;
+    Y = X - ((t - 1) / tnew ) * (X - Xlast);
+
+    t = tnew;
+    X.copyTo(Xlast);
+    Xnew.copyTo(X);
+
+    // Calculate Fobenius norm of (Xnew - X)
+    Mat diff = X - Xlast;
+    float norm_diff = norm(diff, NORM_L2);
+    if (norm_diff < eps) {
+      cout << "Converged at iteration " << i << " with norm_diff = " << norm_diff << endl;
+      break;
+    }
+    else
+      cout << "Iteration " << i << ", norm_diff = " << norm_diff << endl;
+
+    //cout << X << endl;
+  }
+  
+  return X;
+}
+
+Mat TNNR_ADMM(Mat& im0, Mat& mask, float beta, float eps){
+  int height = im0.rows;
+  int width = im0.cols;
+  int R = (int)(min(height, width) / 2.0);
+  cout<< "R = " << R << endl;
+
+  Mat A, Sigma, B;
+  SVD::compute(im0, Sigma, A, B);
+  cout<< "A:" << A.rows << " " << A.cols << endl;
+  cout<< "B:" << B.rows << " " << B.cols << endl;
+  cout<< "Sigma:" << Sigma.rows << " " << Sigma.cols << endl;
+  cout<< Sigma << endl;
+  A = A(Range::all(), Range(0, R));
+  cout << "A after:" << A.rows << " " << A.cols << endl;
+  B = B(Range(0, R), Range::all());
+  cout << "B after:" << B.rows << " " << B.cols << endl;
+  Mat AB;
+  gemm(A, B, 1.0, Mat(), 0.0, AB);
+  cout << "AB:" << AB.rows << " " << AB.cols << endl;
+
+  Mat X, W, Y;
+  im0.convertTo(X, CV_32FC1);
+  X.copyTo(W);
+  X.copyTo(Y);
+
+  for(int i=0; i<200; i++){
+    Mat tmp = W - Y/beta;
+    Mat u, s, v;
+    SVD::compute(tmp, s, u, v);
+    s = max(s - 1.0/beta, 0.0);
+    s = Mat::diag(s);
+    Mat Xnew = u * s * v;
+
+    Mat Wnew = Xnew + (AB + Y)/beta;
+    Wnew = Wnew.mul(1-mask) + im0.mul(mask); // apply mask
+
+    Mat Ynew = Y + beta * (Xnew - Wnew);
+
+    Mat diff = Xnew - X;
+    cout<< "Iteration " << i << " norm_diff = " << norm(diff, NORM_L2) << endl;
+
+    X = Xnew.clone();
+    W = Wnew.clone();
+    Y = Ynew.clone();
+  }
+
+  return X;
+}
