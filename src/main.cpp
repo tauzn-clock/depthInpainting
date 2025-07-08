@@ -119,7 +119,7 @@ int main(int argc, char ** argv)
       mask /= 255; // convert to 0-1
 
       multiply(depth, mask, depth);
-      Mat inpainted = TNRR_APGL(depth, mask, 0.01, 0.01);
+      Mat inpainted = TNNR_APGL(depth, mask, 0.01, 0.01);
       seeMaxMin(inpainted);
       inpainted.convertTo(inpainted, CV_16UC1);
       imwrite(inpaintedPath, inpainted);
@@ -135,7 +135,7 @@ int main(int argc, char ** argv)
       1, 0, 1, 1,
       0, 1, 0, 1 );
     multiply(X, mask, X);
-    Mat inpainted = TNRR_APGL(X, mask, 0.01, 0.001);
+    Mat inpainted = TNNR_APGL(X, mask, 0.01, 0.001);
     //Mat inpainted = TNNR_ADMM(X, mask, 1, 0.001);
     cout << "Original Matrix: " << endl << X << endl;
     cout << "Inpainted Matrix: " << endl << inpainted << endl;

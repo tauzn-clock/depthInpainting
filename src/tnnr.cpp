@@ -102,7 +102,7 @@ Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda){
   return X;
 }
 
-Mat TNRR_APGL(Mat& im0, Mat& mask, float lambda, float eps) {
+Mat TNNR_APGL(Mat& im0, Mat& mask, float lambda, float eps) {
   int H = im0.rows;
   int W = im0.cols;
   int R = (int)(min(H, W) / 2.0);
@@ -145,9 +145,14 @@ Mat TNRR_APGL(Mat& im0, Mat& mask, float lambda, float eps) {
     Y = X + ((last_t - 1) / t) * (X - Xlast);
 
     // Calculate Fobenius norm of (Xnew - X)
-    Mat diff = X - Xlast;
+    Mat diff = (X - Xlast).mul(mask);
     float norm_diff = norm(diff, NORM_L2);
     cout << "Iteration " << i << ", norm_diff = " << norm_diff << endl;
+
+    if (norm_diff < eps) {
+      cout << "Convergence reached at iteration " << i << endl;
+      break;
+    }
 
     //cout << X << endl;
   }
@@ -193,12 +198,17 @@ Mat TNNR_ADMM(Mat& im0, Mat& mask, float beta, float eps){
 
     Mat Ynew = Y + beta * (Xnew - Wnew);
 
-    Mat diff = Xnew - X;
+    Mat diff = (Xnew - X).mul(mask);
     cout<< "Iteration " << i << " norm_diff = " << norm(diff, NORM_L2) << endl;
 
     X = Xnew.clone();
     W = Wnew.clone();
     Y = Ynew.clone();
+
+    if (norm(diff, NORM_L2) < eps) {
+      cout << "Convergence reached at iteration " << i << endl;
+      break;
+    }
   }
 
   return X;
