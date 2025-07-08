@@ -72,6 +72,38 @@ int main(int argc, char ** argv)
       imwrite(outputMask, mask);
       imwrite(outputMissing, disparityMissing);
     }
+  // Test RGB
+  else if( instruction == "RGB" )
+    {
+      Mat img = imread(argv[2], IMREAD_COLOR);
+      //To grayscale
+      Mat gray;
+      cvtColor(img, gray, COLOR_BGR2GRAY);
+      cout << "Gray image size: " << gray.rows << " " << gray.cols << endl;
+      gray.convertTo(gray, CV_32FC1);
+
+      Mat A, Sigma, B;
+      SVD::compute(gray, Sigma, A, B);
+      cout << "A: " << A.rows << " " << A.cols << endl;
+      cout << "B: " << B.rows << " " << B.cols << endl;
+
+      int N = 4;
+
+      A = A(Range::all(), Range(0, N));
+      cout << "A after: " << A.rows << " " << A.cols << endl;
+      B = B(Range(0, N), Range::all());
+      cout << "B after: " << B.rows << " " << B.cols << endl;
+      Sigma = Sigma(Range(0, N), Range::all());
+      Sigma = Mat::diag(Sigma);
+      cout << "Sigma after: " << Sigma.rows << " " << Sigma.cols << endl;
+      Mat X_rec = A * Sigma * B;
+      cout << "X_rec: " << X_rec.rows << " " << X_rec.cols << endl;
+
+      imwrite("A.png", A);
+      imwrite("B.png", B);
+      imwrite("X_rec.png", X_rec);
+
+    }
   // Low rank
   else if(instruction == "L" )
     {
@@ -84,14 +116,30 @@ int main(int argc, char ** argv)
 
       Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
       mask.convertTo(mask, depth.type());
+      mask /= 255; // convert to 0-1
 
-      multiply(depth, mask / 255, depth);
-      Mat inpainted = TNNR(depth, mask, 90, 90, 0.06);
+      multiply(depth, mask, depth);
+      Mat inpainted = TNRR_APGL(depth, mask, 0.01, 0.01);
       seeMaxMin(inpainted);
       inpainted.convertTo(inpainted, CV_16UC1);
-      imwrite(argv[4], inpainted);
+      imwrite(inpaintedPath, inpainted);
       
     }
+  else if (instruction=="test"){
+    Mat X = (cv::Mat_<float>(3,4)<<
+      1, 2, 3, 4,
+      2, 4, 6, 8,
+      3, 6, 9, 12);
+    Mat mask = (cv::Mat_<float>(3,4)<<
+      0, 1, 1, 1,
+      1, 0, 1, 1,
+      0, 1, 0, 1 );
+    multiply(X, mask, X);
+    Mat inpainted = TNRR_APGL(X, mask, 0.01, 0.001);
+    //Mat inpainted = TNNR_ADMM(X, mask, 1, 0.001);
+    cout << "Original Matrix: " << endl << X << endl;
+    cout << "Inpainted Matrix: " << endl << inpainted << endl;
+  }
   // only TV inpainting
   else if( instruction == "T" )
     {
@@ -328,17 +376,15 @@ int main(int argc, char ** argv)
 
       string path1 = ".";
       
-      Mat denoised = TNNR(depthMissing, mask, 90, 90, 0.06);
+      Mat denoised = TNNR(depthMissing, mask, 50, 200, 0.6);
 
       LRL0 lrl0(depthMissing, mask);
       lrl0.setParameters(1.2,0.1,lambda_l0,10);
       lrl0.init_U(denoised);
       Mat result = lrl0.compute(K, max_iter, inpaintedPath, orig, path1);
-      // Mat output;
-      //result.convertTo(output, CV_8UC1);
-      //imwrite(inpaintedPath, output);
-      
-      
+      Mat output;
+      result.convertTo(output, CV_16UC1);
+      imwrite(inpaintedPath, output);
     }
     else if( instruction == "LRL0PHI" )
     {

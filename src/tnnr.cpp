@@ -102,9 +102,7 @@ Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda){
   return X;
 }
 
-Mat TNRR_APGL(Mat& im0, Mat& mask, float lambda, float eps){
-  float t = 1.0;
-
+Mat TNRR_APGL(Mat& im0, Mat& mask, float lambda, float eps) {
   int H = im0.rows;
   int W = im0.cols;
   int R = (int)(min(H, W) / 2.0);
@@ -112,48 +110,44 @@ Mat TNRR_APGL(Mat& im0, Mat& mask, float lambda, float eps){
 
   Mat A, Sigma, B;
   SVD::compute(im0, Sigma, A, B);
-  cout<< "A:" << A.rows << " " << A.cols << endl;
-  cout<< "B:" << B.rows << " " << B.cols << endl;
-  cout<< "Sigma:" << Sigma.rows << " " << Sigma.cols << endl;
-  cout<< Sigma << endl;
+  //cout<< "A:" << A.rows << " " << A.cols << endl;
+  //cout<< "B:" << B.rows << " " << B.cols << endl;
+  //cout<< "Sigma:" << Sigma.rows << " " << Sigma.cols << endl;
+  //cout<< Sigma << endl;
   A = A(Range::all(), Range(0, R));
   cout << "A after:" << A.rows << " " << A.cols << endl;
   B = B(Range(0, R), Range::all());
-  cout << "B after:" << B.rows << " " << B.cols << endl;
+  //cout << "B after:" << B.rows << " " << B.cols << endl;
   Mat AB;
   gemm(A, B, 1.0, Mat(), 0.0, AB);
   cout << "AB:" << AB.rows << " " << AB.cols << endl;
-  cout << "AB" << endl << AB << endl;
 
   Mat X, Xlast, Y;
   im0.copyTo(X);
   X.copyTo(Y);
   X.copyTo(Xlast);
+  float t = 1.0;
 
   for(int i=0; i<200; i++){
+    X.copyTo(Xlast);
+
     Mat Ymasked = (Y-im0).mul(mask);
     Mat tmp = Y + t * (AB - lambda * (Ymasked));
     Mat u, s, v;
     SVD::compute(tmp, s, u, v);
     s = max(s - t, 0.0);
     s = Mat::diag(s);
-    Mat Xnew = u * s * v;
-    float tnew = (1 + sqrt(1 + 4 * t * t)) / 2.0;
-    Y = X + ((t - 1) / tnew ) * (X - Xlast);
+    X = u * s * v;
 
-    t = tnew;
-    X.copyTo(Xlast);
-    Xnew.copyTo(X);
+    float last_t = t;
+    t = (1 + sqrt(1 + 4 * last_t * last_t)) / 2.0; // update t
+
+    Y = X + ((last_t - 1) / t) * (X - Xlast);
 
     // Calculate Fobenius norm of (Xnew - X)
     Mat diff = X - Xlast;
     float norm_diff = norm(diff, NORM_L2);
-    if (norm_diff < eps) {
-      cout << "Converged at iteration " << i << " with norm_diff = " << norm_diff << endl;
-      break;
-    }
-    else
-      cout << "Iteration " << i << ", norm_diff = " << norm_diff << endl;
+    cout << "Iteration " << i << ", norm_diff = " << norm_diff << endl;
 
     //cout << X << endl;
   }
@@ -169,17 +163,17 @@ Mat TNNR_ADMM(Mat& im0, Mat& mask, float beta, float eps){
 
   Mat A, Sigma, B;
   SVD::compute(im0, Sigma, A, B);
-  cout<< "A:" << A.rows << " " << A.cols << endl;
-  cout<< "B:" << B.rows << " " << B.cols << endl;
-  cout<< "Sigma:" << Sigma.rows << " " << Sigma.cols << endl;
-  cout<< Sigma << endl;
+  //cout<< "A:" << A.rows << " " << A.cols << endl;
+  //cout<< "B:" << B.rows << " " << B.cols << endl;
+  //cout<< "Sigma:" << Sigma.rows << " " << Sigma.cols << endl;
+  //cout<< Sigma << endl;
   A = A(Range::all(), Range(0, R));
-  cout << "A after:" << A.rows << " " << A.cols << endl;
+  //cout << "A after:" << A.rows << " " << A.cols << endl;
   B = B(Range(0, R), Range::all());
-  cout << "B after:" << B.rows << " " << B.cols << endl;
+  //cout << "B after:" << B.rows << " " << B.cols << endl;
   Mat AB;
   gemm(A, B, 1.0, Mat(), 0.0, AB);
-  cout << "AB:" << AB.rows << " " << AB.cols << endl;
+  //cout << "AB:" << AB.rows << " " << AB.cols << endl;
 
   Mat X, W, Y;
   im0.convertTo(X, CV_32FC1);
