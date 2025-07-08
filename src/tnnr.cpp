@@ -139,7 +139,7 @@ Mat TNRR_APGL(Mat& im0, Mat& mask, float lambda, float eps){
     s = Mat::diag(s);
     Mat Xnew = u * s * v;
     float tnew = (1 + sqrt(1 + 4 * t * t)) / 2.0;
-    Y = X - ((t - 1) / tnew ) * (X - Xlast);
+    Y = X + ((t - 1) / tnew ) * (X - Xlast);
 
     t = tnew;
     X.copyTo(Xlast);
