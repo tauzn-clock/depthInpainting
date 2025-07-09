@@ -119,7 +119,7 @@ int main(int argc, char ** argv)
       mask /= 255; // convert to 0-1
 
       multiply(depth, mask, depth);
-      Mat inpainted = TNNR_ADMM(depth, mask, 0.1, 1, 0.01);
+      Mat inpainted = TNNR_APGL(depth, mask, 0.1, 0.01, 0.01);
       seeMaxMin(inpainted);
       inpainted.convertTo(inpainted, CV_16UC1);
       imwrite(inpaintedPath, inpainted);
