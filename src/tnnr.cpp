@@ -102,10 +102,10 @@ Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda){
   return X;
 }
 
-Mat TNNR_APGL(Mat& im0, Mat& mask, float lambda, float eps) {
+Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {
   int H = im0.rows;
   int W = im0.cols;
-  int R = (int)(min(H, W) / 2.0);
+  int R = (int)(min(H, W) * SVD_ratio);
   cout<< "R = " << R << endl;
 
   Mat A, Sigma, B;
@@ -160,10 +160,10 @@ Mat TNNR_APGL(Mat& im0, Mat& mask, float lambda, float eps) {
   return X;
 }
 
-Mat TNNR_ADMM(Mat& im0, Mat& mask, float beta, float eps){
+Mat TNNR_ADMM(Mat& im0, Mat& mask, float SVD_ratio, float beta, float eps){
   int height = im0.rows;
   int width = im0.cols;
-  int R = (int)(min(height, width) / 2.0);
+  int R = (int)(min(height, width) * SVD_ratio);
   cout<< "R = " << R << endl;
 
   Mat A, Sigma, B;
