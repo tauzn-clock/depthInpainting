@@ -79,29 +79,41 @@ int main(int argc, char ** argv)
       //To grayscale
       Mat gray;
       cvtColor(img, gray, COLOR_BGR2GRAY);
-      cout << "Gray image size: " << gray.rows << " " << gray.cols << endl;
       gray.convertTo(gray, CV_32FC1);
 
-      Mat A, Sigma, B;
-      SVD::compute(gray, Sigma, A, B);
-      cout << "A: " << A.rows << " " << A.cols << endl;
-      cout << "B: " << B.rows << " " << B.cols << endl;
+      imwrite("gray.png", gray);
 
-      int N = 4;
+      
+      // Randomly mask some pixels
+      RNG rng;
+      Mat mask = Mat::zeros(gray.rows, gray.cols, CV_32FC1);
+      rng.fill(mask, RNG::UNIFORM, 0, 255);
+      threshold(mask, mask, 127, 255, THRESH_BINARY);
+      mask /= 255; // convert to 0-1
+      
+      /*
+      // Rectangular mask
+      Mat mask = Mat::zeros(gray.rows, gray.cols, CV_32FC1);
+      int x = gray.cols / 20 * 3;
+      int y = gray.rows / 20;
+      int w = gray.cols / 20;
+      int h = gray.rows / 20;
+      rectangle(mask, Point(x, y), Point(x + w, y + h), Scalar(255), -1);
+      mask /= 255; // convert to 0-1
+      mask = 1 - mask;
+      */
+      
 
-      A = A(Range::all(), Range(0, N));
-      cout << "A after: " << A.rows << " " << A.cols << endl;
-      B = B(Range(0, N), Range::all());
-      cout << "B after: " << B.rows << " " << B.cols << endl;
-      Sigma = Sigma(Range(0, N), Range::all());
-      Sigma = Mat::diag(Sigma);
-      cout << "Sigma after: " << Sigma.rows << " " << Sigma.cols << endl;
-      Mat X_rec = A * Sigma * B;
-      cout << "X_rec: " << X_rec.rows << " " << X_rec.cols << endl;
+      Mat grayMissing;
+      multiply(gray, mask, grayMissing);
+      imwrite("grayMissing.png", grayMissing);
 
-      imwrite("A.png", A);
-      imwrite("B.png", B);
-      imwrite("X_rec.png", X_rec);
+      Mat inpainted = TNNR_APGL(grayMissing, mask, 0.5, 0.01, 0.5);
+      //Mat inpainted = TNNR_ADMM(grayMissing, mask, 0.1, 1, 0.01);
+
+      seeMaxMin(inpainted);
+      inpainted.convertTo(inpainted, CV_8UC1);
+      imwrite("inpainted.png", inpainted);
 
     }
   // Low rank
