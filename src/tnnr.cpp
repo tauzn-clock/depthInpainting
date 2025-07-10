@@ -110,51 +110,43 @@ Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {
 
   Mat A, Sigma, B;
   SVD::compute(im0, Sigma, A, B);
-  //cout<< "A:" << A.rows << " " << A.cols << endl;
-  //cout<< "B:" << B.rows << " " << B.cols << endl;
-  //cout<< "Sigma:" << Sigma.rows << " " << Sigma.cols << endl;
-  //cout<< Sigma << endl;
   A = A(Range::all(), Range(0, R));
-  cout << "A after:" << A.rows << " " << A.cols << endl;
   B = B(Range(0, R), Range::all());
-  //cout << "B after:" << B.rows << " " << B.cols << endl;
+  
   Mat AB;
   gemm(A, B, 1.0, Mat(), 0.0, AB);
-  cout << "AB:" << AB.rows << " " << AB.cols << endl;
 
   Mat X, Xlast, Y;
   im0.copyTo(X);
   X.copyTo(Y);
-  X.copyTo(Xlast);
-  float t = 1.0;
+  float t = 1.0, last_t, obj_val;
 
-  for(int i=0; i<200; i++){
+  for(int i=0; i<2000; i++){
+    // New X
     X.copyTo(Xlast);
-
-    Mat Ymasked = (Y-im0).mul(mask);
-    Mat tmp = Y + t * (AB - lambda * (Ymasked));
+    Mat tmp = Y + t * (AB - lambda * ((Y-im0).mul(mask)));
     Mat u, s, v;
     SVD::compute(tmp, s, u, v);
     s = max(s - t, 0.0);
     s = Mat::diag(s);
     X = u * s * v;
 
-    float last_t = t;
+    // New t
+    last_t = t;
     t = (1 + sqrt(1 + 4 * last_t * last_t)) / 2.0; // update t
 
+    // New Y
     Y = X + ((last_t - 1) / t) * (X - Xlast);
 
-    // Calculate Fobenius norm of (Xnew - X)
+    // Objective
+    float fro_norm = norm((X - im0).mul(mask), NORM_L2);
+    fro_norm = fro_norm * fro_norm; // square the norm
+    obj_val = traceNorm(X) - trace(X * AB.t())[0] + lambda / 2.0 * fro_norm; // objective function value
+
+    // Change in X
     Mat diff = (X - Xlast).mul(mask);
     float norm_diff = norm(diff, NORM_L2);
-    cout << "Iteration " << i << ", norm_diff = " << norm_diff << endl;
-
-    if (norm_diff < eps) {
-      cout << "Convergence reached at iteration " << i << endl;
-      break;
-    }
-
-    //cout << X << endl;
+    cout << "Iteration " << i << ", norm_diff = " << norm_diff << " obj_val = " << obj_val << endl;
   }
   
   return X;
