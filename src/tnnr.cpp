@@ -121,7 +121,9 @@ Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {
   X.copyTo(Y);
   float t = 1.0, last_t, obj_val;
 
-  for(int i=0; i<2000; i++){
+  float input norm = norm(im0, NORM_L2);
+  
+  for(int i=0; i<1000; i++){
     // New X
     X.copyTo(Xlast);
     Mat tmp = Y + t * (AB - lambda * ((Y-im0).mul(mask)));
@@ -146,7 +148,11 @@ Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {
     // Change in X
     Mat diff = (X - Xlast).mul(mask);
     float norm_diff = norm(diff, NORM_L2);
-    cout << "Iteration " << i << ", norm_diff = " << norm_diff << " obj_val = " << obj_val << endl;
+    //cout << "Iteration " << i << ", norm_diff = " << norm_diff << " obj_val = " << obj_val << endl;
+
+    if (norm_diff / input norm < eps) {
+      break;
+    }
   }
   
   return X;

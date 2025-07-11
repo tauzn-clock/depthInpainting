@@ -72,6 +72,35 @@ int main(int argc, char ** argv)
       imwrite(outputMask, mask);
       imwrite(outputMissing, disparityMissing);
     }
+  // Matlab
+  else if (instruction == "matlab"){
+    Mat X_full = imread(argv[2], IMREAD_COLOR);
+    cvtColor(X_full, X_full, COLOR_BGR2GRAY);
+    X_full.convertTo(X_full, CV_32FC1);
+    int H = X_full.rows;
+    int W = X_full.cols;
+
+    Mat mask = imread(argv[3], IMREAD_GRAYSCALE);
+    mask.convertTo(mask, CV_32FC1, 1.0/255.0);
+
+    Mat X_miss = X_full * mask;
+
+    Mat known, missing;
+    known = mask.clone();
+    missing = 1 - known;
+
+    int max_iter = 100;
+    int tol = 3e-4;
+  
+    Mat X = X_miss(Range::all(), Range::all());
+    Mat M = X_full(Range::all(), Range::all());
+
+    double M_fro = norm(M, NORM_L2);
+    Mat X_last = X.clone();
+
+
+
+  }
   // Test RGB
   else if( instruction == "RGB" )
     {
@@ -83,32 +112,33 @@ int main(int argc, char ** argv)
 
       imwrite("gray.png", gray);
 
-      
+      /*
       // Randomly mask some pixels
       RNG rng;
       Mat mask = Mat::zeros(gray.rows, gray.cols, CV_32FC1);
       rng.fill(mask, RNG::UNIFORM, 0, 255);
       threshold(mask, mask, 127, 255, THRESH_BINARY);
       mask /= 255; // convert to 0-1
+      */
       
-      /*
+      
       // Rectangular mask
       Mat mask = Mat::zeros(gray.rows, gray.cols, CV_32FC1);
-      int x = gray.cols / 20 * 3;
-      int y = gray.rows / 20;
-      int w = gray.cols / 20;
-      int h = gray.rows / 20;
+      int x = gray.cols / 10 * 3;
+      int y = gray.rows / 10;
+      int w = gray.cols / 10;
+      int h = gray.rows / 10;
       rectangle(mask, Point(x, y), Point(x + w, y + h), Scalar(255), -1);
       mask /= 255; // convert to 0-1
       mask = 1 - mask;
-      */
+      
       
 
       Mat grayMissing;
       multiply(gray, mask, grayMissing);
       imwrite("grayMissing.png", grayMissing);
 
-      Mat inpainted = TNNR_APGL(grayMissing, mask, 0.5, 0.01, 0.5);
+      Mat inpainted = TNNR_APGL(grayMissing, mask, 0.01, 0.01, 0.5);
       //Mat inpainted = TNNR_ADMM(grayMissing, mask, 0.1, 1, 0.01);
 
       seeMaxMin(inpainted);
@@ -131,7 +161,7 @@ int main(int argc, char ** argv)
       mask /= 255; // convert to 0-1
 
       multiply(depth, mask, depth);
-      Mat inpainted = TNNR_APGL(depth, mask, 0.1, 0.01, 0.01);
+      Mat inpainted = TNNR_APGL(depth, mask, 0.05, 0.005, 0.001);
       seeMaxMin(inpainted);
       inpainted.convertTo(inpainted, CV_16UC1);
       imwrite(inpaintedPath, inpainted);
