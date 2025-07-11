@@ -102,7 +102,7 @@ Mat TNNR(Mat &im0, Mat &mask, int lower_R, int upper_R, float lambda){
   return X;
 }
 
-Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {
+Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {  
   int H = im0.rows;
   int W = im0.cols;
   int R = (int)(min(H, W) * SVD_ratio);
@@ -118,17 +118,20 @@ Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {
 
   Mat X, Xlast, Y;
   im0.copyTo(X);
-  X.copyTo(Y);
+  im0.copyTo(Y);
   float t = 1.0, last_t, obj_val;
 
-  float input norm = norm(im0, NORM_L2);
-  
-  for(int i=0; i<1000; i++){
+  float input_norm = norm(im0.mul(mask), NORM_L2);
+
+  float sigma_r_init = Sigma.at<float>(R - 1, 0);
+
+  for(int i=0; i<200; i++){
     // New X
     X.copyTo(Xlast);
     Mat tmp = Y + t * (AB - lambda * ((Y-im0).mul(mask)));
     Mat u, s, v;
     SVD::compute(tmp, s, u, v);
+
     s = max(s - t, 0.0);
     s = Mat::diag(s);
     X = u * s * v;
@@ -140,6 +143,7 @@ Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {
     // New Y
     Y = X + ((last_t - 1) / t) * (X - Xlast);
 
+    /*
     // Objective
     float fro_norm = norm((X - im0).mul(mask), NORM_L2);
     fro_norm = fro_norm * fro_norm; // square the norm
@@ -148,65 +152,54 @@ Mat TNNR_APGL(Mat& im0, Mat& mask, float SVD_ratio, float lambda, float eps) {
     // Change in X
     Mat diff = (X - Xlast).mul(mask);
     float norm_diff = norm(diff, NORM_L2);
-    //cout << "Iteration " << i << ", norm_diff = " << norm_diff << " obj_val = " << obj_val << endl;
+    cout << "Iteration " << i << ", norm_diff = " << norm_diff << " obj_val = " << obj_val << endl;
 
-    if (norm_diff / input norm < eps) {
-      break;
-    }
+    cout<< norm_diff << " " << input_norm << " " << eps << endl;
+    */
   }
   
   return X;
 }
 
 Mat TNNR_ADMM(Mat& im0, Mat& mask, float SVD_ratio, float beta, float eps){
-  int height = im0.rows;
-  int width = im0.cols;
-  int R = (int)(min(height, width) * SVD_ratio);
+  int Height = im0.rows;
+  int Width = im0.cols;
+  int R = (int)(min(Height, Width) * SVD_ratio);
   cout<< "R = " << R << endl;
 
   Mat A, Sigma, B;
   SVD::compute(im0, Sigma, A, B);
-  //cout<< "A:" << A.rows << " " << A.cols << endl;
-  //cout<< "B:" << B.rows << " " << B.cols << endl;
-  //cout<< "Sigma:" << Sigma.rows << " " << Sigma.cols << endl;
-  //cout<< Sigma << endl;
   A = A(Range::all(), Range(0, R));
-  //cout << "A after:" << A.rows << " " << A.cols << endl;
   B = B(Range(0, R), Range::all());
-  //cout << "B after:" << B.rows << " " << B.cols << endl;
+  
   Mat AB;
   gemm(A, B, 1.0, Mat(), 0.0, AB);
-  //cout << "AB:" << AB.rows << " " << AB.cols << endl;
 
   Mat X, W, Y;
-  im0.convertTo(X, CV_32FC1);
-  X.copyTo(W);
-  X.copyTo(Y);
+  im0.copyTo(X);
+  im0.copyTo(W);
+  im0.copyTo(Y);
+
+  float input_norm = norm(im0.mul(mask), NORM_L2);
+
+  float sigma_r_init = Sigma.at<float>(R - 1, 0);
 
   for(int i=0; i<200; i++){
     Mat tmp = W - Y/beta;
     Mat u, s, v;
     SVD::compute(tmp, s, u, v);
+
     s = max(s - 1.0/beta, 0.0);
     s = Mat::diag(s);
-    Mat Xnew = u * s * v;
+    X = u * s * v;
 
-    Mat Wnew = Xnew + (AB + Y)/beta;
-    Wnew = Wnew.mul(1-mask) + im0.mul(mask); // apply mask
+    W = X + (AB + Y)/beta;
+    W = W.mul(1-mask) + im0.mul(mask); // apply mask
 
-    Mat Ynew = Y + beta * (Xnew - Wnew);
+    Y = Y + beta * (X - W);
 
-    Mat diff = (Xnew - X).mul(mask);
-    cout<< "Iteration " << i << " norm_diff = " << norm(diff, NORM_L2) << endl;
-
-    X = Xnew.clone();
-    W = Wnew.clone();
-    Y = Ynew.clone();
-
-    if (norm(diff, NORM_L2) < eps) {
-      cout << "Convergence reached at iteration " << i << endl;
-      break;
-    }
+    //Mat diff = (Xnew - X).mul(mask);
+    //cout<< "Iteration " << i << " norm_diff = " << norm(diff, NORM_L2) << endl;
   }
 
   return X;

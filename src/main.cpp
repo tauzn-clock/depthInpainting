@@ -147,7 +147,7 @@ int main(int argc, char ** argv)
 
     }
   // Low rank
-  else if(instruction == "L" )
+  else if(instruction == "TNNR_APGL" )
     {
       string depthPath = argv[2];
       string maskPath = argv[3];
@@ -161,12 +161,32 @@ int main(int argc, char ** argv)
       mask /= 255; // convert to 0-1
 
       multiply(depth, mask, depth);
-      Mat inpainted = TNNR_APGL(depth, mask, 0.05, 0.005, 0.001);
+      Mat inpainted = TNNR_APGL(depth, mask, 0.05, 0.005, 0.01);
       seeMaxMin(inpainted);
       inpainted.convertTo(inpainted, CV_16UC1);
       imwrite(inpaintedPath, inpainted);
       
     }
+  else if(instruction == "TNNR_ADDM" )
+  {
+    string depthPath = argv[2];
+    string maskPath = argv[3];
+    string inpaintedPath = argv[4];
+
+    Mat depth = imread(depthPath, IMREAD_UNCHANGED);
+    depth.convertTo(depth, CV_32FC1);
+
+    Mat mask = imread(maskPath, IMREAD_GRAYSCALE);
+    mask.convertTo(mask, depth.type());
+    mask /= 255; // convert to 0-1
+
+    multiply(depth, mask, depth);
+    Mat inpainted = TNNR_ADMM(depth, mask, 0.05, 1, 0.01);
+    seeMaxMin(inpainted);
+    inpainted.convertTo(inpainted, CV_16UC1);
+    imwrite(inpaintedPath, inpainted);
+    
+  }
   else if (instruction=="test"){
     Mat X = (cv::Mat_<float>(3,4)<<
       1, 2, 3, 4,
@@ -177,8 +197,8 @@ int main(int argc, char ** argv)
       1, 0, 1, 1,
       0, 1, 0, 1 );
     multiply(X, mask, X);
-    //Mat inpainted = TNNR_APGL(X, mask, 0.5, 0.01, 0.001);
-    Mat inpainted = TNNR_ADMM(X, mask, 0.5, 1, 0.001);
+    //Mat inpainted = TNNR_APGL(X, mask, 0.5, 0.01, 0.01);
+    Mat inpainted = TNNR_ADMM(X, mask, 0.5, 1, 0.01);
     cout << "Original Matrix: " << endl << X << endl;
     cout << "Inpainted Matrix: " << endl << inpainted << endl;
   }
