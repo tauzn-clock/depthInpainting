@@ -159,14 +159,14 @@ int main(int argc, char ** argv)
       Mat mask = Mat::zeros(depth.rows, depth.cols, CV_8U);
       if (maskPath=="0"){
         cv::compare(depth, 0, mask, cv::CMP_GT);
-        mask.convertTo(mask, CV_32FC1);
       }
       else{
         cout<<"Reading mask from: " << maskPath << endl;
         mask = imread(maskPath, IMREAD_GRAYSCALE);
-        mask.convertTo(mask, depth.type());
-        mask /= 255; // convert to 0-1
       }
+
+      mask.convertTo(mask, depth.type());
+      mask /= 255; // convert to 0-1
 
       multiply(depth, mask, depth);
       Mat inpainted = TNNR_APGL(depth, mask, 0.05, 0.005, 0.01);
